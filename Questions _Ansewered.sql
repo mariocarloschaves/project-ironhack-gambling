@@ -203,9 +203,100 @@ FROM (
 ) ranked
 WHERE rnk = 1;
 
+##Where Are the Large Pools of Money?
+SELECT
+    p.Product,
+    SUM(b.Bet_Amt) AS Total_Revenue
+FROM Betting b
+JOIN Product p
+    ON b.ClassId = p.ClassId
+   AND b.CategoryId = p.CategoryId
+WHERE b.Bet_Amt > 0
+GROUP BY p.Product
+ORDER BY Total_Revenue DESC;
 
 
+###Revenue by Customer Group
+SELECT
+    c.CustomerGroup,
+    SUM(b.Bet_Amt) AS Total_Revenue
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustId
+JOIN Betting b ON a.AccountNo = b.AccountNo
+WHERE b.Bet_Amt > 0
+GROUP BY c.CustomerGroup
+ORDER BY Total_Revenue DESC;
 
+#-----What Are the Most Profitable Periods?
+
+SELECT
+    b.BetDate,
+    SUM(b.Bet_Amt) AS DailyTurnover
+FROM Betting b
+WHERE b.Bet_Amt > 0
+GROUP BY b.BetDate
+ORDER BY b.BetDate;
+
+#-----Revenue by Month
+SELECT
+    DATE_FORMAT(b.BetDate, '%Y-%m') AS Month,
+    SUM(b.Bet_Amt) AS MonthlyTurnover
+FROM Betting b
+WHERE b.Bet_Amt > 0
+GROUP BY Month
+ORDER BY Month;
+
+#----High-Value Players
+SELECT
+    c.CustID,
+    c.CustomerGroup,
+    SUM(b.Bet_Amt) AS Total_Revenue
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustId
+JOIN Betting b ON a.AccountNo = b.AccountNo
+WHERE b.Bet_Amt > 0
+GROUP BY c.CustID, c.CustomerGroup
+ORDER BY Total_Revenue DESC;
+
+#----Multi-Product Players vs Single Product
+SELECT
+    c.CustID,
+    c.FirstName,
+    c.LastName,
+    p.product,
+    COUNT(DISTINCT p.Product) AS ProductsPlayed
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustId
+JOIN Betting b ON a.AccountNo = b.AccountNo
+JOIN Product p
+    ON b.ClassId = p.ClassId
+   AND b.CategoryId = p.CategoryId
+WHERE b.Bet_Amt > 0
+GROUP BY 
+	c.CustID,
+    c.FirstName,
+    c.LastName,
+    p.product;
 
     
+    #--------Currency Exposure Risk
     
+    SELECT
+    a.CurrencyCode,
+    SUM(b.Bet_Amt) AS Total_Revenue
+FROM Account a
+JOIN Betting b ON a.AccountNo = b.AccountNo
+WHERE b.Bet_Amt > 0
+GROUP BY a.CurrencyCode;
+
+#-----Risk Behaviour Analysis
+
+SELECT
+    c.CustomerGroup,
+    AVG(a.StakeScale) AS AvgStakeScale,
+    AVG(a.DailyDepositLimit) AS AvgDepositLimit
+FROM Customer c
+JOIN Account a ON c.CustID = a.CustId
+GROUP BY c.CustomerGroup;
+
+
